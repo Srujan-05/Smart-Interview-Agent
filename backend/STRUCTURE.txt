@@ -1,0 +1,177 @@
+backend/
+├── main.py                          # FastAPI application setup
+├── config.py                        # Configuration from .env
+├── database.py                      # SQLAlchemy async engine
+├── .env                             # Environment variables (local)
+├── .env.example                     # Template for .env
+├── .gitignore                       # Git ignore rules
+├── requirements.txt                 # Python dependencies (full)
+├── requirements-core.txt            # Core dependencies only
+├── README.md                        # Backend documentation
+├── run.sh                          # Script to run backend
+│
+├── models/                          # SQLAlchemy ORM Models
+│   ├── __init__.py
+│   ├── user.py                      # User model
+│   ├── profile.py                   # Profile model (JSON fields)
+│   └── session.py                   # InterviewSession & FeedbackReport models
+│
+├── schemas/                         # Pydantic validation schemas
+│   ├── __init__.py
+│   ├── auth.py                      # LoginRequest, RegisterRequest, etc.
+│   ├── profile.py                   # UserProfile, Skill, Experience, etc.
+│   ├── job.py                       # Job, JobFilters
+│   └── interview.py                 # Interview, SessionMetrics, Feedback, etc.
+│
+├── routers/                         # API endpoint handlers
+│   ├── __init__.py
+│   ├── auth.py                      # POST /api/auth/login|register
+│   ├── profile.py                   # GET/PUT /api/profile
+│   ├── resume.py                    # POST /api/resume/upload|parse
+│   ├── jobs.py                      # GET /api/jobs
+│   ├── interview.py                 # POST/GET /api/interview/*
+│   └── ws.py                        # WS /ws/interview
+│
+├── services/                        # Business logic
+│   ├── __init__.py
+│   ├── resume_parser.py             # Extract text from PDF/DOCX
+│   ├── profile_analyzer.py          # [LLM Placeholder] Extract profile
+│   ├── job_service.py               # Search jobs + calculate match
+│   ├── interview_agent.py           # [LLM Placeholder] Generate questions
+│   ├── visual_analyzer.py           # Video frame analysis (mocked)
+│   ├── audio_analyzer.py            # Audio chunk analysis (mocked)
+│   ├── technical_scorer.py          # [LLM Placeholder] Score answers
+│   └── feedback_generator.py        # [LLM Placeholder] Generate feedback
+│
+├── utils/                           # Utility functions
+│   ├── __init__.py
+│   ├── auth.py                      # JWT, bcrypt, get_current_user
+│   └── file_utils.py                # File upload validation
+│
+├── uploads/                         # Uploaded resume files (created at runtime)
+│
+└── iphipi.db                       # SQLite database (created at runtime)
+
+
+DATABASE SCHEMA
+===============
+
+users
+  - id (UUID, PK)
+  - email (String, unique)
+  - name (String)
+  - phone (String, nullable)
+  - location (String, nullable)
+  - password_hash (String, bcrypt)
+  - created_at (DateTime)
+
+profiles
+  - user_id (UUID, FK, unique)
+  - skills (JSON)
+  - experience (JSON)
+  - projects (JSON)
+  - education (JSON)
+  - seniority_level (String)
+  - domain_exposure (JSON)
+  - training_profile (JSON)
+  - resume_filename (String, nullable)
+  - resume_path (String, nullable)
+
+interview_sessions
+  - id (UUID, PK)
+  - user_id (UUID, FK)
+  - mode (String) [Behavioral/Technical/Mixed/Mock]
+  - difficulty (String) [Easy/Medium/Hard/Adaptive]
+  - job_id (String, nullable)
+  - questions (JSON)
+  - answers (JSON)
+  - session_metrics (JSON)
+  - started_at (DateTime)
+  - ended_at (DateTime, nullable)
+  - status (String) [active/completed]
+
+feedback_reports
+  - id (UUID, PK)
+  - session_id (UUID, FK, unique)
+  - overall_score (Float)
+  - breakdown (JSON)
+  - per_question_feedback (JSON)
+  - recommendations (JSON)
+  - created_at (DateTime)
+
+
+API ENDPOINTS (11 total)
+========================
+
+Authentication (2)
+  POST   /api/auth/login                  → LoginResponse
+  POST   /api/auth/register               → LoginResponse
+
+Profile (2)
+  GET    /api/profile                     → UserProfile
+  PUT    /api/profile                     → UserProfile
+
+Resume (2)
+  POST   /api/resume/upload               → {"message": "..."}
+  POST   /api/resume/parse                → {"message": "..."}
+
+Jobs (1)
+  GET    /api/jobs?query=...&location=... → Job[]
+
+Interview (3)
+  POST   /api/interview/start             → InterviewSession
+  POST   /api/interview/submit-answer     → {"message": "..."}
+  POST   /api/interview/get-feedback      → FeedbackReport
+  GET    /api/interview/sessions          → SessionSummary[]
+
+WebSocket (1)
+  WS     /ws/interview?sessionId=X        ↔ SessionMetrics
+
+
+CORE DEPENDENCIES
+=================
+fastapi              - Web framework
+uvicorn[standard]    - ASGI server with WebSocket
+sqlalchemy           - ORM
+aiosqlite            - Async SQLite driver
+pydantic             - Data validation
+python-jose          - JWT tokens
+passlib[bcrypt]      - Password hashing
+python-multipart     - File uploads
+pdfplumber           - PDF text extraction
+python-docx          - DOCX text extraction
+httpx                - Async HTTP client
+python-dotenv        - Environment variables
+email-validator      - Email validation for Pydantic
+
+
+OPTIONAL DEPENDENCIES (for ML features)
+=======================================
+mediapipe            - Visual analysis (eye contact, posture)
+opencv-python        - Video frame processing
+librosa              - Audio analysis (pitch, pace, clarity)
+numpy                - Numerical operations
+bert-score           - Semantic similarity scoring
+torch                - ML framework (required by mediapipe & bert-score)
+
+
+STATUS & NOTES
+==============
+✅ All core endpoints functional
+✅ Database with automatic table creation
+✅ Authentication & authorization working
+✅ File upload & parsing (text extraction)
+✅ Job search (mock data + Adzuna API ready)
+✅ Interview session management
+✅ WebSocket real-time metrics (mocked analysis)
+✅ Feedback generation (placeholder)
+
+⚠️ LLM Integration (Marked for Future)
+  - resume profile extraction
+  - question generation
+  - answer scoring
+  - feedback generation
+
+⚠️ ML Models (Optional - Currently Mocked)
+  - Visual metrics analysis (eye contact, posture, stress)
+  - Audio metrics analysis (tone, pitch, clarity, pace)
