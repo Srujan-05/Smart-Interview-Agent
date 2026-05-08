@@ -93,7 +93,10 @@ async def websocket_interview(
 
                     await websocket.send_text(json.dumps(metrics))
 
-    except Exception as e:
+    except Exception:
         pass
     finally:
-        await websocket.close()
+        try:
+            await websocket.close()
+        except Exception:
+            pass
