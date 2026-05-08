@@ -162,6 +162,14 @@ async def get_feedback(
             recommendations=existing_feedback.recommendations if isinstance(existing_feedback.recommendations, dict) else {},
         )
 
+    # Check if session has at least one answer (even if abruptly ended)
+    answers = session.answers if isinstance(session.answers, list) else []
+    if not answers:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot generate feedback: no answers submitted in this session",
+        )
+
     session.status = "completed"
     session.ended_at = datetime.utcnow()
 
