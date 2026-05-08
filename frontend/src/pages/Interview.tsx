@@ -11,6 +11,12 @@ import { useAppStore } from '@/store'
 const QUESTION_DURATION = 120 // 2 minutes
 const THINK_TIME = 30
 
+const DEFAULT_METRICS = {
+  visualScores: { eyeContact: 0, posture: 'Fair' as const, engagementLevel: 0, stressLevel: 0 },
+  audioScores: { tone: 'Neutral' as const, pitchVariation: 0, speechClarity: 0, speakingPace: 0 },
+  technicalScores: { correctness: 0, completeness: 0, depth: 0 },
+}
+
 export function Interview() {
   const navigate = useNavigate()
   const { liveMetrics, submitAnswer, finish } = useInterview()
@@ -71,27 +77,27 @@ export function Interview() {
   const handleStopRecording = useCallback(async () => {
     setIsRecordingLocal(false)
     await stopRecording()
-    if (!currentQuestion || !liveMetrics) return
+    if (!currentQuestion) return
 
     await submitAnswer({
       questionId: currentQuestion.id,
       transcription: transcript,
       duration: questionTimer,
       retakeCount: 0,
-      metrics: liveMetrics,
+      metrics: liveMetrics ?? DEFAULT_METRICS,
     })
 
     setAnswerSubmitted(true)
   }, [stopRecording, currentQuestion, liveMetrics, submitAnswer, transcript, questionTimer])
 
   const handleSkip = useCallback(async () => {
-    if (!currentQuestion || !liveMetrics) return
+    if (!currentQuestion) return
     await submitAnswer({
       questionId: currentQuestion.id,
       transcription: '',
       duration: 0,
       retakeCount: 0,
-      metrics: liveMetrics,
+      metrics: liveMetrics ?? DEFAULT_METRICS,
     })
     setAnswerSubmitted(true)
   }, [currentQuestion, liveMetrics, submitAnswer])

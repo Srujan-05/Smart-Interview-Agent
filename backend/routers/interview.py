@@ -91,8 +91,8 @@ async def submit_answer(
 ):
     result = await db.execute(
         select(InterviewSession).where(
-            InterviewSession.id == payload.sessionId
-            and InterviewSession.user_id == current_user.id
+            InterviewSession.id == payload.sessionId,
+            InterviewSession.user_id == current_user.id,
         )
     )
     session = result.scalar_one_or_none()
@@ -134,8 +134,8 @@ async def get_feedback(
 
     result = await db.execute(
         select(InterviewSession).where(
-            InterviewSession.id == session_id
-            and InterviewSession.user_id == current_user.id
+            InterviewSession.id == session_id,
+            InterviewSession.user_id == current_user.id,
         )
     )
     session = result.scalar_one_or_none()
@@ -160,6 +160,7 @@ async def get_feedback(
             breakdown=existing_feedback.breakdown if isinstance(existing_feedback.breakdown, dict) else {},
             perQuestionFeedback=existing_feedback.per_question_feedback if isinstance(existing_feedback.per_question_feedback, list) else [],
             recommendations=existing_feedback.recommendations if isinstance(existing_feedback.recommendations, dict) else {},
+            appliedStrategy={"mode": "fixed", "difficulty": "Medium", "description": "Standard fixed-difficulty interview session.", "focusAreas": []},
         )
 
     # Check if session has at least one answer (even if abruptly ended)
@@ -198,6 +199,7 @@ async def get_feedback(
         breakdown=feedback_data["breakdown"],
         perQuestionFeedback=feedback_data["perQuestionFeedback"],
         recommendations=feedback_data["recommendations"],
+        appliedStrategy=feedback_data.get("appliedStrategy"),
     )
 
 

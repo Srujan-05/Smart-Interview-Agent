@@ -188,7 +188,7 @@ export interface FeedbackReport {
   sessionId: string
   overallScore: number
   breakdown: ScoreBreakdown
-  appliedStrategy: AppliedStrategy
+  appliedStrategy?: AppliedStrategy
   perQuestionFeedback: QuestionFeedback[]
   recommendations: {
     topAreasToImprove: string[]

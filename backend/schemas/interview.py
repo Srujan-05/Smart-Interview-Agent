@@ -98,6 +98,7 @@ class FeedbackReport(BaseModel):
     breakdown: ScoreBreakdown
     perQuestionFeedback: List[QuestionFeedback]
     recommendations: Recommendations
+    appliedStrategy: Optional[dict] = None
 
     class Config:
         from_attributes = True

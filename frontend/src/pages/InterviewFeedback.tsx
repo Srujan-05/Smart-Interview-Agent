@@ -124,7 +124,7 @@ export function InterviewFeedback() {
       </div>
 
       {/* Interview strategy (Adaptive-only) */}
-      {report.appliedStrategy.mode !== 'fixed' && (
+      {report.appliedStrategy && report.appliedStrategy.mode !== 'fixed' && (
         <Card className="shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">

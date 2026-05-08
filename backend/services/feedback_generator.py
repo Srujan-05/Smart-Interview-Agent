@@ -57,4 +57,10 @@ async def generate_session_feedback(
         "breakdown": breakdown,
         "perQuestionFeedback": per_question_feedback,
         "recommendations": recommendations,
+        "appliedStrategy": {
+            "mode": "fixed",
+            "difficulty": "Medium",
+            "description": "Standard fixed-difficulty interview session.",
+            "focusAreas": [],
+        },
     }
