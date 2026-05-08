@@ -14,8 +14,9 @@ const THINK_TIME = 30
 export function Interview() {
   const navigate = useNavigate()
   const { liveMetrics, submitAnswer, finish } = useInterview()
-  const { pauseSocket, resumeSocket, nextQuestion } = useInterviewContext()
+  const { pauseSocket, resumeSocket } = useInterviewContext()
   const currentSession = useAppStore((s) => s.currentSession)
+  const { nextQuestion } = useAppStore()
   const { videoRef, isPermitted, requestPermissions, startRecording, stopRecording, transcript, resetTranscript } =
     useMediaStream()
 
@@ -105,11 +106,16 @@ export function Interview() {
     setHintsUsed(0)
   }, [nextQuestion, resetTranscript])
 
-  const handleExit = useCallback(() => {
+  const handleExit = useCallback(async () => {
     if (window.confirm('Exit interview? Your answers so far will be saved.')) {
-      handleFinish()
+      const feedbackData = await finish()
+      if (feedbackData) {
+        navigate(`/interview/feedback/${feedbackData.sessionId}`)
+      } else {
+        navigate('/')
+      }
     }
-  }, [])
+  }, [finish, navigate])
 
   const handleFinish = useCallback(async () => {
     const feedbackData = await finish()
