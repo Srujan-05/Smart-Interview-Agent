@@ -31,7 +31,9 @@ interface InterviewContextValue {
 const InterviewContext = createContext<InterviewContextValue | null>(null)
 
 export function InterviewProvider({ children }: { children: ReactNode }) {
-  const { currentSession, setSession, nextQuestion } = useAppStore()
+  const currentSession = useAppStore((s) => s.currentSession)
+  const setSession = useAppStore((s) => s.setSession)
+  const nextQuestion = useAppStore((s) => s.nextQuestion)
   const [isRecording, setIsRecording] = useState(false)
   const [liveMetrics, setLiveMetrics] = useState<SessionMetrics | null>(null)
 

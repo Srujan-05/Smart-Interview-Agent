@@ -14,9 +14,8 @@ const THINK_TIME = 30
 export function Interview() {
   const navigate = useNavigate()
   const { liveMetrics, submitAnswer, finish } = useInterview()
-  const { pauseSocket, resumeSocket } = useInterviewContext()
+  const { pauseSocket, resumeSocket, nextQuestion } = useInterviewContext()
   const currentSession = useAppStore((s) => s.currentSession)
-  const { nextQuestion } = useAppStore()
   const { videoRef, isPermitted, requestPermissions, startRecording, stopRecording, transcript, resetTranscript } =
     useMediaStream()
 
