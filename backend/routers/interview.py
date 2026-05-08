@@ -110,9 +110,8 @@ async def submit_answer(
         "retakeCount": payload.retakeCount,
     }
 
-    answers = session.answers if isinstance(session.answers, list) else []
-    answers.append(answer)
-    session.answers = answers
+    existing = list(session.answers) if isinstance(session.answers, list) else []
+    session.answers = existing + [answer]
     session.session_metrics = {
         "visualScores": payload.metrics.visualScores.model_dump(),
         "audioScores": payload.metrics.audioScores.model_dump(),
