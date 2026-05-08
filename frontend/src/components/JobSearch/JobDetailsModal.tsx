@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { MatchScoreBadge } from '@/components/Common/MatchScoreBadge'
+import { SeniorityMatchBar } from '@/components/JobSearch/SeniorityMatchBar'
 import { formatSalary } from '@/utils/formatters'
 import type { Job } from '@/types'
 
@@ -63,6 +64,14 @@ export function JobDetailsModal({ job, onClose }: JobDetailsModalProps) {
             ))}
           </div>
         </section>
+
+        {/* Seniority match */}
+        {job.seniorityMatchDetail && (
+          <section className="space-y-2">
+            <h3 className="text-sm font-semibold text-gray-700">Seniority Match</h3>
+            <SeniorityMatchBar detail={job.seniorityMatchDetail} />
+          </section>
+        )}
 
         {/* Job description */}
         <section className="space-y-2">

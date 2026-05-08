@@ -146,6 +146,22 @@ async def get_feedback(
             detail="Session not found",
         )
 
+    # Check if feedback already exists for this session
+    feedback_result = await db.execute(
+        select(FeedbackReportModel).where(FeedbackReportModel.session_id == session_id)
+    )
+    existing_feedback = feedback_result.scalar_one_or_none()
+
+    if existing_feedback:
+        # Return existing feedback
+        return FeedbackReport(
+            sessionId=session_id,
+            overallScore=existing_feedback.overall_score,
+            breakdown=existing_feedback.breakdown if isinstance(existing_feedback.breakdown, dict) else {},
+            perQuestionFeedback=existing_feedback.per_question_feedback if isinstance(existing_feedback.per_question_feedback, list) else [],
+            recommendations=existing_feedback.recommendations if isinstance(existing_feedback.recommendations, dict) else {},
+        )
+
     session.status = "completed"
     session.ended_at = datetime.utcnow()
 

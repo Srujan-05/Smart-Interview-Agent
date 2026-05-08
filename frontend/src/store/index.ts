@@ -35,6 +35,7 @@ interface InterviewSlice {
   sessionHistory: SessionSummary[]
   setSession: (session: InterviewSession | null) => void
   appendAnswer: (answer: InterviewSession['answers'][0]) => void
+  nextQuestion: () => void
   setSessionHistory: (history: SessionSummary[]) => void
 }
 
@@ -99,6 +100,16 @@ export const useAppStore = create<AppStore>()(
             },
           }
         }),
+      nextQuestion: () =>
+        set((state) => {
+          if (!state.currentSession) return state
+          return {
+            currentSession: {
+              ...state.currentSession,
+              currentQuestionIndex: state.currentSession.currentQuestionIndex + 1,
+            },
+          }
+        }),
       setSessionHistory: (history) => set({ sessionHistory: history }),
     }),
     {
@@ -107,6 +118,7 @@ export const useAppStore = create<AppStore>()(
         token: state.token,
         user: state.user,
         savedJobs: state.savedJobs,
+        currentSession: state.currentSession,
       }),
     },
   ),

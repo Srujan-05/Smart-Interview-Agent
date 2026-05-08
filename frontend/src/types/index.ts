@@ -1,5 +1,25 @@
 export type SkillLevel = 'Beginner' | 'Intermediate' | 'Advanced'
 export type SeniorityLevel = 'Junior' | 'Mid' | 'Senior' | 'Lead'
+
+export interface SeniorityMatchDetail {
+  userYearsOfExperience: number
+  requiredYearsMin: number
+  requiredYearsMax: number
+  adjustmentFactor: number
+  adjustmentPoints: number
+}
+
+export type StrategyMode = 'retrieved' | 'exploratory' | 'fixed'
+
+export interface AppliedStrategy {
+  mode: StrategyMode
+  difficulty: DifficultyLevel
+  description: string
+  focusAreas: string[]
+  retrievedFromGroupSize?: number
+  explorationReason?: string
+}
+
 export type LearningStyle = 'Visual' | 'Auditory' | 'Kinesthetic'
 export type InterviewMode = 'Behavioral' | 'Technical' | 'Mixed' | 'Mock'
 export type DifficultyLevel = 'Easy' | 'Medium' | 'Hard' | 'Adaptive'
@@ -59,6 +79,7 @@ export interface UserProfile {
   projects: Project[]
   education: Education[]
   seniorityLevel: SeniorityLevel
+  yearsOfExperience: number
   domainExposure: string[]
   trainingProfile: TrainingProfile
 }
@@ -79,6 +100,7 @@ export interface Job {
   aboutCompany: string
   saved: boolean
   applyUrl?: string
+  seniorityMatchDetail?: SeniorityMatchDetail
 }
 
 export interface JobFilters {
@@ -166,6 +188,7 @@ export interface FeedbackReport {
   sessionId: string
   overallScore: number
   breakdown: ScoreBreakdown
+  appliedStrategy: AppliedStrategy
   perQuestionFeedback: QuestionFeedback[]
   recommendations: {
     topAreasToImprove: string[]

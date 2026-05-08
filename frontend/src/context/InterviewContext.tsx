@@ -22,12 +22,16 @@ interface InterviewContextValue {
   stopRecording: () => void
   submitAnswer: (payload: Omit<SubmitAnswerPayload, 'sessionId'>) => Promise<void>
   endSession: () => Promise<string | null>
+  pauseSocket: () => void
+  resumeSocket: () => void
+  reconnectSocket: (sessionId: string) => void
+  nextQuestion: () => void
 }
 
 const InterviewContext = createContext<InterviewContextValue | null>(null)
 
 export function InterviewProvider({ children }: { children: ReactNode }) {
-  const { currentSession, setSession } = useAppStore()
+  const { currentSession, setSession, nextQuestion } = useAppStore()
   const [isRecording, setIsRecording] = useState(false)
   const [liveMetrics, setLiveMetrics] = useState<SessionMetrics | null>(null)
 
@@ -57,6 +61,19 @@ export function InterviewProvider({ children }: { children: ReactNode }) {
     return sessionId
   }, [currentSession, setSession])
 
+  const pauseSocket = useCallback(() => {
+    interviewSocket.pause()
+  }, [])
+
+  const resumeSocket = useCallback(() => {
+    interviewSocket.resume()
+  }, [])
+
+  const reconnectSocket = useCallback((sessionId: string) => {
+    interviewSocket.reconnectSocket(sessionId)
+    interviewSocket.onMetrics(setLiveMetrics)
+  }, [])
+
   return (
     <InterviewContext.Provider
       value={{
@@ -67,6 +84,10 @@ export function InterviewProvider({ children }: { children: ReactNode }) {
         stopRecording,
         submitAnswer,
         endSession,
+        pauseSocket,
+        resumeSocket,
+        reconnectSocket,
+        nextQuestion,
       }}
     >
       {children}

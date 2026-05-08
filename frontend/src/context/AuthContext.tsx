@@ -36,10 +36,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = async (data: LoginRequest) => {
-    const res = await authApi.login(data)
-    const { accessToken, user } = res.data
-    localStorage.setItem('token', accessToken)
-    setAuth(accessToken, user)
+    try {
+      const res = await authApi.login(data)
+      const { accessToken, user } = res.data
+      localStorage.setItem('token', accessToken)
+      setAuth(accessToken, user)
+    } catch (error: unknown) {
+      console.error('[Login Error]', error)
+      throw error
+    }
   }
 
   const logout = () => {
@@ -48,10 +53,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const register = async (data: RegisterRequest) => {
-    const res = await authApi.register(data)
-    const { accessToken, user } = res.data
-    localStorage.setItem('token', accessToken)
-    setAuth(accessToken, user)
+    try {
+      const res = await authApi.register(data)
+      const { accessToken, user } = res.data
+      localStorage.setItem('token', accessToken)
+      setAuth(accessToken, user)
+    } catch (error: unknown) {
+      console.error('[Register Error]', error)
+      throw error
+    }
   }
 
   return (

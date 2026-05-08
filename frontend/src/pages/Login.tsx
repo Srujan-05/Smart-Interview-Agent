@@ -26,8 +26,11 @@ export function Login() {
     try {
       await login(data)
       navigate('/')
-    } catch {
-      setServerError('Invalid email or password. Please try again.')
+    } catch (error: unknown) {
+      const detail = (error as any)?.response?.data?.detail
+      const message = error instanceof Error ? error.message : 'Login failed'
+      const errorMsg = detail || message
+      setServerError(errorMsg || 'Invalid email or password. Please try again.')
     }
   }
 

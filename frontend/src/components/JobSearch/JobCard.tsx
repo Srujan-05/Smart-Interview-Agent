@@ -47,6 +47,15 @@ export function JobCard({ job, onViewDetails }: JobCardProps) {
             {job.locationType}
           </Badge>
         </div>
+        {job.seniorityMatchDetail && (
+          <div className="text-xs text-gray-500 pt-1">
+            {job.seniorityMatchDetail.userYearsOfExperience} yrs ·{' '}
+            <span className={job.seniorityMatchDetail.adjustmentPoints > 0 ? 'text-green-600' : 'text-red-600'}>
+              {job.seniorityMatchDetail.adjustmentPoints > 0 ? '+' : ''}{job.seniorityMatchDetail.adjustmentPoints.toFixed(1)}
+            </span>{' '}
+            seniority pts
+          </div>
+        )}
       </CardHeader>
 
       <CardContent className="space-y-3 pt-0">

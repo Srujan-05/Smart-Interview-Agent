@@ -2,10 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { VideoPanel } from '@/components/Interview/VideoPanel'
 import { QuestionPanel } from '@/components/Interview/QuestionPanel'
-import { MetricsPanel } from '@/components/Interview/MetricsPanel'
 import { LoadingSpinner } from '@/components/Common/LoadingSpinner'
 import { useInterview } from '@/hooks/useInterview'
 import { useMediaStream } from '@/hooks/useMediaStream'
+import { useInterviewContext } from '@/context/InterviewContext'
 import { useAppStore } from '@/store'
 
 const QUESTION_DURATION = 120 // 2 minutes
@@ -14,16 +14,17 @@ const THINK_TIME = 30
 export function Interview() {
   const navigate = useNavigate()
   const { liveMetrics, submitAnswer, finish } = useInterview()
+  const { pauseSocket, resumeSocket, nextQuestion } = useInterviewContext()
   const currentSession = useAppStore((s) => s.currentSession)
-  const { videoRef, isPermitted, requestPermissions, startRecording, stopRecording } =
+  const { videoRef, isPermitted, requestPermissions, startRecording, stopRecording, transcript, resetTranscript } =
     useMediaStream()
 
   const [questionTimer, setQuestionTimer] = useState(0)
   const [sessionElapsed, setSessionElapsed] = useState(0)
   const [thinkTimeLeft, setThinkTimeLeft] = useState(THINK_TIME)
-  const [transcription, setTranscription] = useState('')
   const [hintsUsed, setHintsUsed] = useState(0)
   const [isRecordingLocal, setIsRecordingLocal] = useState(false)
+  const [answerSubmitted, setAnswerSubmitted] = useState(false)
 
   const currentQuestion =
     currentSession?.questions[currentSession.currentQuestionIndex]
@@ -31,6 +32,16 @@ export function Interview() {
   useEffect(() => {
     if (!isPermitted) requestPermissions()
   }, [isPermitted, requestPermissions])
+
+  // WebSocket lifecycle: resume on mount, pause on unmount
+  useEffect(() => {
+    if (currentSession) {
+      resumeSocket()
+    }
+    return () => {
+      pauseSocket()
+    }
+  }, [currentSession, pauseSocket, resumeSocket])
 
   // Session timer
   useEffect(() => {
@@ -64,17 +75,14 @@ export function Interview() {
 
     await submitAnswer({
       questionId: currentQuestion.id,
-      transcription,
+      transcription: transcript,
       duration: questionTimer,
       retakeCount: 0,
       metrics: liveMetrics,
     })
 
-    // Reset for next question
-    setQuestionTimer(0)
-    setThinkTimeLeft(THINK_TIME)
-    setTranscription('')
-  }, [stopRecording, currentQuestion, liveMetrics, submitAnswer, transcription, questionTimer])
+    setAnswerSubmitted(true)
+  }, [stopRecording, currentQuestion, liveMetrics, submitAnswer, transcript, questionTimer])
 
   const handleSkip = useCallback(async () => {
     if (!currentQuestion || !liveMetrics) return
@@ -85,10 +93,23 @@ export function Interview() {
       retakeCount: 0,
       metrics: liveMetrics,
     })
+    setAnswerSubmitted(true)
+  }, [currentQuestion, liveMetrics, submitAnswer])
+
+  const handleNextQuestion = useCallback(() => {
+    nextQuestion()
+    setAnswerSubmitted(false)
     setQuestionTimer(0)
     setThinkTimeLeft(THINK_TIME)
-    setTranscription('')
-  }, [currentQuestion, liveMetrics, submitAnswer])
+    resetTranscript()
+    setHintsUsed(0)
+  }, [nextQuestion, resetTranscript])
+
+  const handleExit = useCallback(() => {
+    if (window.confirm('Exit interview? Your answers so far will be saved.')) {
+      handleFinish()
+    }
+  }, [])
 
   const handleFinish = useCallback(async () => {
     const feedbackData = await finish()
@@ -124,7 +145,7 @@ export function Interview() {
   }
 
   return (
-    <div className="grid h-full grid-cols-[280px_1fr_260px] gap-4">
+    <div className="grid h-full grid-cols-[280px_1fr_220px] gap-4">
       {/* Left: Video */}
       <VideoPanel
         videoRef={videoRef}
@@ -140,7 +161,7 @@ export function Interview() {
         question={currentQuestion}
         questionNumber={currentSession.currentQuestionIndex + 1}
         totalQuestions={currentSession.questions.length}
-        transcription={transcription}
+        transcription={transcript}
         isRecording={isRecordingLocal}
         hintsUsed={hintsUsed}
         maxHints={3}
@@ -151,11 +172,43 @@ export function Interview() {
         onHint={() => setHintsUsed((n) => n + 1)}
       />
 
-      {/* Right: Metrics */}
+      {/* Right: Session Info & Controls */}
       <div className="space-y-4">
-        <MetricsPanel metrics={liveMetrics} sessionElapsed={sessionElapsed} />
+        {/* Session Timer */}
+        <div className="rounded-lg border border-gray-200 bg-white p-4">
+          <p className="text-xs font-semibold text-gray-600">SESSION TIME</p>
+          <p className="mt-2 text-2xl font-bold text-gray-900">
+            {Math.floor(sessionElapsed / 60)}:{String(sessionElapsed % 60).padStart(2, '0')}
+          </p>
+        </div>
 
-        {isLastQuestion && (
+        {/* Progress */}
+        <div className="rounded-lg border border-gray-200 bg-white p-4">
+          <p className="text-xs font-semibold text-gray-600">PROGRESS</p>
+          <p className="mt-2 text-lg font-semibold text-gray-900">
+            Q {currentSession.currentQuestionIndex + 1} of {currentSession.questions.length}
+          </p>
+          <div className="mt-3 h-2 w-full rounded-full bg-gray-200">
+            <div
+              className="h-full rounded-full bg-blue-500 transition-all"
+              style={{
+                width: `${((currentSession.currentQuestionIndex + 1) / currentSession.questions.length) * 100}%`,
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Next/Finish Button */}
+        {answerSubmitted && !isLastQuestion && (
+          <button
+            className="w-full rounded-lg bg-blue-500 py-2.5 text-sm font-semibold text-white hover:bg-blue-600 transition-colors"
+            onClick={handleNextQuestion}
+          >
+            Next Question →
+          </button>
+        )}
+
+        {isLastQuestion && answerSubmitted && (
           <button
             className="w-full rounded-lg bg-green-500 py-2.5 text-sm font-semibold text-white hover:bg-green-600 transition-colors"
             onClick={handleFinish}
@@ -163,6 +216,14 @@ export function Interview() {
             Finish & Get Feedback
           </button>
         )}
+
+        {/* Exit Button */}
+        <button
+          className="w-full rounded-lg border border-red-300 bg-white py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
+          onClick={handleExit}
+        >
+          Exit Interview
+        </button>
       </div>
     </div>
   )

@@ -123,6 +123,60 @@ export function InterviewFeedback() {
         </Card>
       </div>
 
+      {/* Interview strategy (Adaptive-only) */}
+      {report.appliedStrategy.mode !== 'fixed' && (
+        <Card className="shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              Interview Strategy
+              <Badge
+                className={
+                  report.appliedStrategy.mode === 'retrieved'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-purple-100 text-purple-700'
+                }
+              >
+                {report.appliedStrategy.mode === 'retrieved' ? 'Retrieved' : 'Exploratory'}
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-1">Strategy Description</p>
+              <p className="text-sm text-gray-600">{report.appliedStrategy.description}</p>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">Focus Areas</p>
+              <div className="flex flex-wrap gap-2">
+                {report.appliedStrategy.focusAreas.map((area) => (
+                  <Badge key={area} variant="outline" className="text-xs">
+                    {area}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            {report.appliedStrategy.mode === 'retrieved' && report.appliedStrategy.retrievedFromGroupSize && (
+              <div className="rounded-lg bg-blue-50 p-3">
+                <p className="text-xs font-semibold text-blue-700 mb-1">Derived from Similar Learners</p>
+                <p className="text-sm text-blue-800">
+                  This strategy was derived from {report.appliedStrategy.retrievedFromGroupSize} similar learner{' '}
+                  {report.appliedStrategy.retrievedFromGroupSize === 1 ? 'profile' : 'profiles'} with comparable speaking style and confidence level.
+                </p>
+              </div>
+            )}
+
+            {report.appliedStrategy.mode === 'exploratory' && report.appliedStrategy.explorationReason && (
+              <div className="rounded-lg bg-purple-50 p-3">
+                <p className="text-xs font-semibold text-purple-700 mb-1">Exploration Rationale</p>
+                <p className="text-sm text-purple-800">{report.appliedStrategy.explorationReason}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Per-question feedback */}
       <Card className="shadow-sm">
         <CardHeader className="pb-3">

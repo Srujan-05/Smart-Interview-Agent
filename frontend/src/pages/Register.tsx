@@ -26,8 +26,11 @@ export function Register() {
     try {
       await registerUser({ name: data.name, email: data.email, password: data.password })
       navigate('/')
-    } catch {
-      setServerError('Registration failed. Email may already be in use.')
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Registration failed'
+      const detail = (error as any)?.response?.data?.detail
+      const errorMsg = detail || message
+      setServerError(errorMsg || 'Registration failed. Please check your details and try again.')
     }
   }
 

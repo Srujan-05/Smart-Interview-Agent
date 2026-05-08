@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Camera, Mic, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
+import { Camera, Mic, CheckCircle, AlertCircle, Loader2, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useMediaStream } from '@/hooks/useMediaStream'
 import { useInterview } from '@/hooks/useInterview'
+import { useAppStore } from '@/store'
 import type { InterviewMode, DifficultyLevel } from '@/types'
 
 const MODES: { value: InterviewMode; label: string; description: string }[] = [
@@ -25,6 +26,8 @@ const DIFFICULTIES: { value: DifficultyLevel; label: string }[] = [
 export function InterviewSetup() {
   const navigate = useNavigate()
   const location = useLocation()
+  const currentSession = useAppStore((s) => s.currentSession)
+  const setSession = useAppStore((s) => s.setSession)
   const [mode, setMode] = useState<InterviewMode>(
     (location.state as { mode?: InterviewMode } | null)?.mode ?? 'Behavioral',
   )
@@ -44,12 +47,48 @@ export function InterviewSetup() {
     navigate('/interview/session')
   }
 
+  const handleResume = () => {
+    navigate('/interview/session')
+  }
+
+  const handleStartNew = () => {
+    setSession(null)
+  }
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Interview Setup</h1>
         <p className="text-sm text-gray-500">Configure your practice session</p>
       </div>
+
+      {/* Active session banner */}
+      {currentSession && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-semibold text-amber-900">You have an active session</p>
+            <p className="text-sm text-amber-700 mt-1">
+              Resume your interview or start a new one (this will discard your progress).
+            </p>
+            <div className="flex gap-3 mt-3">
+              <Button
+                onClick={handleResume}
+                className="bg-blue-500 hover:bg-blue-600 text-white text-sm"
+              >
+                Resume Session
+              </Button>
+              <Button
+                onClick={handleStartNew}
+                variant="outline"
+                className="text-sm"
+              >
+                Start New
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mode selection */}
       <Card className="shadow-sm">
@@ -84,13 +123,22 @@ export function InterviewSetup() {
             <button
               key={d.value}
               onClick={() => setDifficulty(d.value)}
-              className={`rounded-lg border px-4 py-2 text-sm font-medium transition-all ${
+              className={`rounded-lg border px-4 py-2 transition-all flex flex-col items-start ${
                 difficulty === d.value
                   ? 'border-blue-400 bg-blue-500 text-white'
                   : 'border-gray-200 text-gray-700 hover:border-gray-300'
               }`}
             >
-              {d.label}
+              <span className="text-sm font-medium">{d.label}</span>
+              {d.value === 'Adaptive' && (
+                <span
+                  className={`text-xs mt-0.5 ${
+                    difficulty === d.value ? 'text-blue-100' : 'text-gray-500'
+                  }`}
+                >
+                  AI-driven · personalized
+                </span>
+              )}
             </button>
           ))}
         </CardContent>
