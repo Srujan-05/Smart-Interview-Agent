@@ -1,11 +1,15 @@
 from typing import Dict, Any
 import random
+import logging
+
+logger = logging.getLogger(__name__)
 
 try:
     import numpy as np
     NUMPY_AVAILABLE = True
 except ImportError:
     NUMPY_AVAILABLE = False
+    logger.warning("NumPy not available — audio analysis will use random fallbacks")
 
 
 async def analyze_audio_frame(audio_bytes: bytes, sr: int = 16000) -> Dict[str, Any]:
@@ -14,12 +18,15 @@ async def analyze_audio_frame(audio_bytes: bytes, sr: int = 16000) -> Dict[str, 
     Input: PCM float32 mono audio at 16kHz
     """
     if not NUMPY_AVAILABLE:
-        return get_default_audio_scores()
+        scores = get_default_audio_scores()
+        logger.debug("Audio (random fallback): %s", scores)
+        return scores
 
     try:
         import numpy as np
         audio_data = np.frombuffer(audio_bytes, dtype=np.float32)
         if len(audio_data) == 0:
+            logger.debug("Empty audio buffer received")
             return get_default_audio_scores()
 
         rms = np.sqrt(np.mean(audio_data ** 2))
@@ -40,13 +47,22 @@ async def analyze_audio_frame(audio_bytes: bytes, sr: int = 16000) -> Dict[str, 
         else:
             tone = "Neutral"
 
-        return {
+        scores = {
             "tone": tone,
             "pitchVariation": min(100, max(0, int(pitch_variation))),
             "speechClarity": min(100, max(0, int(clarity))),
             "speakingPace": min(200, max(100, int(pace))),
         }
-    except Exception:
+        logger.debug(
+            "Audio (numpy) samples=%d rms=%.4f energy=%.1f tone=%s pitch=%d clarity=%d pace=%d",
+            len(audio_data), rms, energy,
+            scores["tone"], scores["pitchVariation"],
+            scores["speechClarity"], scores["speakingPace"],
+        )
+        return scores
+
+    except Exception as e:
+        logger.error("Audio analysis exception: %s", e, exc_info=True)
         return get_default_audio_scores()
 
 

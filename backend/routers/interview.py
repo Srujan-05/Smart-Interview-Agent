@@ -1,6 +1,9 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+
+logger = logging.getLogger(__name__)
 from schemas.interview import (
     InterviewStartConfig,
     InterviewSession as InterviewSessionSchema,
@@ -108,15 +111,28 @@ async def submit_answer(
         "transcription": payload.transcription,
         "duration": payload.duration,
         "retakeCount": payload.retakeCount,
+        "metrics": {
+            "visualScores": payload.metrics.visualScores.model_dump(),
+            "audioScores": payload.metrics.audioScores.model_dump(),
+            "technicalScores": payload.metrics.technicalScores.model_dump(),
+        },
     }
 
     existing = list(session.answers) if isinstance(session.answers, list) else []
     session.answers = existing + [answer]
-    session.session_metrics = {
-        "visualScores": payload.metrics.visualScores.model_dump(),
-        "audioScores": payload.metrics.audioScores.model_dump(),
-        "technicalScores": payload.metrics.technicalScores.model_dump(),
-    }
+
+    # Also store latest metrics on session (for backward compat + debugging)
+    session.session_metrics = answer["metrics"]
+
+    logger.info(
+        "Answer submitted: session=%s question=%s transcription_len=%d "
+        "visual=%s audio=%s",
+        payload.sessionId,
+        payload.questionId,
+        len(payload.transcription),
+        payload.metrics.visualScores.model_dump(),
+        payload.metrics.audioScores.model_dump(),
+    )
 
     await db.commit()
 
@@ -217,10 +233,14 @@ async def get_sessions(
     summaries = []
     for session in sessions:
         score = 0.0
-        metrics = session.session_metrics if isinstance(session.session_metrics, dict) else {}
-        if metrics:
-            breakdown = metrics.get("breakdown", {})
-            score = breakdown.get("overall", 0.0)
+
+        # Fetch feedback report for this session if it exists
+        feedback_result = await db.execute(
+            select(FeedbackReportModel).where(FeedbackReportModel.session_id == session.id)
+        )
+        feedback = feedback_result.scalar_one_or_none()
+        if feedback:
+            score = feedback.overall_score
 
         duration = 0
         if session.ended_at and session.started_at:
